@@ -1,51 +1,59 @@
 from model.pet import Pet
 
-class ABB():
-    def __init__(self):
-        self.root = None
-
-    def add(self, pet:Pet):
-        if self.root == None:
-            self.root = NodeABB(pet)
-        else:
-            self.root.add(pet)
-
-    def exists(self, pet_id):
-        if self.root is None:
-            return False
-        return self.root.exists(pet_id)
-
-class NodeABB:
-    def __init__(self, pet:Pet):
+class Node:
+    def __init__(self, pet: Pet):
         self.pet = pet
         self.left = None
         self.right = None
-        self.size = 1
 
-    def add(self, pet:Pet):
-        if pet.id < self.pet.id:
-            if self.left != None:
-                self.left.add(pet)
+class ABB:
+    def __init__(self):
+        self.root = None
+
+    def add(self, pet: Pet):
+        def insert(node, pet):
+            if node is None:
+                return Node(pet)
+            if pet.id < node.pet.id:
+                node.left = insert(node.left, pet)
             else:
-                self.left = NodeABB(pet)
-        elif self.right != None:
-            self.right.add(pet)
-        else:
-            self.right = NodeABB(pet)
-        self.size +=1
+                node.right = insert(node.right, pet)
+            return node
 
-    def exists(self, pet_id):
-        if pet_id == self.pet.id:
-            return True
-        elif pet_id < self.pet.id and self.left:
-            return self.left.exists(pet_id)
-        elif pet_id > self.pet.id and self.right:
-            return self.right.exists(pet_id)
-        return False
+        self.root = insert(self.root, pet)
 
+    def inorder(self):
+        result = []
 
-class NodeAVL(NodeABB):
-    def __init__(self, pet:Pet):
-        super().__init__(pet)
-        self.height = 1
-        self.balance = 1
+        def traverse(node):
+            if node:
+                traverse(node.left)
+                result.append(node.pet)
+                traverse(node.right)
+
+        traverse(self.root)
+        return result
+
+    def preorder(self):
+        result = []
+
+        def traverse(node):
+            if node:
+                result.append(node.pet)
+                traverse(node.left)
+                traverse(node.right)
+
+        traverse(self.root)
+        return result
+
+    def postorder(self):
+        result = []
+
+        def traverse(node):
+            if node:
+                traverse(node.left)
+                traverse(node.right)
+                result.append(node.pet)
+
+        traverse(self.root)
+        return result

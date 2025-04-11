@@ -1,42 +1,60 @@
+from fastapi import APIRouter, HTTPException, status
 from model.pet import Pet
-from service.abb_service import PetTreeService
-from fastapi import APIRouter
+from service.abb_service import ABBService
 
-abb_service = PetTreeService()
+abb_service = ABBService()
+abb_route = APIRouter(prefix="/abb", tags=["ABB"])
 
-abb_route = APIRouter(prefix="/abb")
+@abb_route.get("/inorder")
+async def inorder():
+    return {"pets": abb_service.get_all_inorder()}
+
+@abb_route.get("/preorder")
+async def preorder():
+    return {"pets": abb_service.get_all_preorder()}
+
+@abb_route.get("/postorder")
+async def postorder():
+    return {"pets": abb_service.get_all_postorder()}
+
+@abb_route.get("/breed/{breed}")
+async def get_pets_by_breed(breed: str):
+    result = abb_service.get_pets_by_breed(breed)
+    if "error" in result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=result["error"])
+    return result
 
 @abb_route.get("/")
-async def get_pets():
-    return abb_service.abb.root
+async def get_all_pets():
+    pets = abb_service.get_all_inorder()
+    if not pets:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No pets found")
+    return {"pets": pets}
 
+@abb_route.post("/pets")  # 👈 CORREGIDO: router → abb_route
+def add_pet(pet: Pet):
+    try:
+        return abb_service.add_pet(pet)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-@abb_route.get("/")
-async def get_pets():
-    return abb_service.abb.root
+@abb_route.put("/{pet_id}")
+async def update_pet(pet_id: int, updated_pet: Pet):
+    result = abb_service.update_pet(pet_id, updated_pet)
+    if "error" in result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=result["error"])
+    return result
 
+@abb_route.delete("/{pet_id}")
+async def delete_pet(pet_id: int):
+    result = abb_service.remove_pet(pet_id)
+    if "error" in result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=result["error"])
+    return result
 
-@abb_route.post("/")
-async def create_pet(pet: Pet):
-    if abb_service.exists(pet.id):
-        return {"error": f"La mascota con ID {pet.id} ya existe."}
-
-    abb_service.abb.add(pet)
-    return {"message": "Mascota agregada con éxito"}
-
-@abb_route.get("/breed_count")
-async def get_breed_count():
-    return abb_service.breed_count()
-
-@abb_route.delete("/{id}")
-async def delete_pet(id: int):
-    if abb_service.delete_pet(id):
-        return {"message": f"Mascota con ID {id} eliminada con éxito"}
-    return {"error": f"No se encontró ninguna mascota con ID {id}"}
-
-@abb_route.put("/{id}")
-async def update_pet(id: int, pet: Pet):
-    updated = abb_service.update_pet(id, pet.name, pet.age, pet.race)
-    if updated:
-        return {"message": f"Mascota con ID {id} actualizada correctamente."}
-    return {"error": f"No se encontró ninguna mascota con ID {id}."}
+@abb_route.get("/{pet_id}")
+async def get_pet_by_id(pet_id: int):
+    pet = abb_service.get_pet_by_id(pet_id)
+    if pet is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pet not found")
+    return {"pet": pet}

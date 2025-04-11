@@ -1,12 +1,17 @@
 from model.abb import ABB
 from model.pet import Pet
 
-
-class PetTreeService:
+class ABBService:
     def __init__(self):
         self.tree = ABB()
-        self.tree.add(Pet(id=10, name="Bobby", age=4, race="golden retriever"))
-        self.tree.add(Pet(id=3, name="Max", age=6, race="bulldog"))
+        self.tree.add(Pet(id=10, name="Bobby", age=4, breed="golden retriever"))
+        self.tree.add(Pet(id=3, name="Max", age=6, breed="bulldog"))
+
+    def add_pet(self, pet: Pet):
+        if self.check_pet_exists(pet.id):
+            return {"error": "A pet with this ID already exists."}
+        self.tree.add(pet)
+        return {"message": "Pet added successfully"}
 
     def check_pet_exists(self, pet_id: int):
         current = self.tree.root
@@ -24,11 +29,8 @@ class PetTreeService:
 
         def count(node):
             if node is not None:
-                breed = node.pet.race
-                if breed in breed_counts:
-                    breed_counts[breed] += 1
-                else:
-                    breed_counts[breed] = 1
+                breed = node.pet.breed  # Asegúrate que sea .breed si tu clase Pet lo define así
+                breed_counts[breed] = breed_counts.get(breed, 0) + 1
                 count(node.left)
                 count(node.right)
 
@@ -59,12 +61,12 @@ class PetTreeService:
             return node
 
         if not self.check_pet_exists(pet_id):
-            return False
+            return {"error": "Pet not found"}
 
         self.tree.root = delete(self.tree.root, pet_id)
-        return True
+        return {"message": "Pet removed successfully"}
 
-    def update_pet_info(self, pet_id: int, new_name=None, new_age=None, new_race=None):
+    def update_pet_info(self, pet_id: int, new_name=None, new_age=None, new_breed=None):
         current = self.tree.root
         while current is not None:
             if current.pet.id == pet_id:
@@ -72,11 +74,11 @@ class PetTreeService:
                     current.pet.name = new_name
                 if new_age:
                     current.pet.age = new_age
-                if new_race:
-                    current.pet.race = new_race
-                return True
-            if pet_id < current.pet.id:
+                if new_breed:
+                    current.pet.breed = new_breed
+                return {"message": "Pet updated successfully"}
+            elif pet_id < current.pet.id:
                 current = current.left
             else:
                 current = current.right
-        return False
+        return {"error": "Pet not found"}
