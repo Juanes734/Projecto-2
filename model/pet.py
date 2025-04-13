@@ -5,3 +5,5 @@ class Pet(BaseModel):
     name: str
     age: int
     breed: str
+    locality: str
+    gender: str
